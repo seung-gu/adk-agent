@@ -1,0 +1,19 @@
+# JetBrains IDE
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+.env.*
+
+# VSCode or other IDEs
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
