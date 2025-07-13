@@ -26,7 +26,7 @@ log_filter_agent = LlmAgent(
     
     ## ACTION
     - Use the extracted or provided values to call get_filtered_logs(project_name, error_level, time_period_hours, environment).
-    - If the number of filtered logs is more than 5, return only the 5 most relevant or recent logs.
+    - If there are more than 5 logs, return the logs with the top 5 most frequent unique messages (no duplicate messages).
     - Return ONLY the filtered logs.
     - Do not add explanations or formatting.
     """,
