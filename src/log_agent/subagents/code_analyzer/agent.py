@@ -1,6 +1,5 @@
 from google.adk.agents.llm_agent import LlmAgent
 
-from .tools import get_code_snippet_from_gitlab
 
 GEMINI_MODEL = "gemini-2.0-flash"
 

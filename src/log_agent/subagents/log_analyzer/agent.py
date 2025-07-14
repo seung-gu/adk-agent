@@ -1,14 +1,5 @@
 from google.adk.agents.llm_agent import LlmAgent
-from pydantic import BaseModel, Field
 
-
-class ErrorDetectContent(BaseModel):
-    timestamp: str = Field(description="The timestamp when the error occurred, in ISO 8601 format.")
-    message: str = Field(description="The main content of the error message, providing details about the issue.")
-    level: str = Field(description="The severity level of the error (e.g., 'error', 'warning', 'info').")
-    topic_name: str = Field(description="The name of the topic or service where the error occurred.")
-    filename: str = Field(description="The name of the file where the error occurred.")
-    document_id: str = Field(description="The unique identifier of the document associated with the error.")
 
 GEMINI_MODEL = "gemini-2.0-flash"
 
