@@ -1,25 +1,23 @@
 from google.adk.agents.llm_agent import LlmAgent
-from src.log_agent.subagents.log_filter.models import LogFilterOutputSchema
+from google.adk.tools.agent_tool import AgentTool
 
+from src.log_agent.subagents.code_extractor.agent import code_extractor_agent
 
-GEMINI_MODEL = "gemini-2.0-flash"
 
 code_analyzer_agent = LlmAgent(
-    name="CodeAnalyzerAgent",
-    model=GEMINI_MODEL,
+    name="code_analyzer",
+    model="gemini-2.0-flash",
     instruction="""
     You are a Code Analyzer Agent.
     Your task is to analyze the code context related to the error logs provided in logs.
     
     ## INPUT
     - You will receive logs (list of log entries and other metadata).
-    
+    - You MUST always call the 'code_extractor_agent' with the provided logs. 
+    - Do not attempt to answer or summarize directly. Wait for the tool result and only return its output.
+
     ## ACTION
-    - For each log entry in logs:
-        1. If the log contains a non-empty stack_trace, extract the file path and line number from the stack_trace.
-        2. Use get_code_snippet_from_gitlab to retrieve the code snippet for the extracted file path and line number.
-        3. Analyze the code to explain the possible cause of the error or issue described in the log message.
-        4. Suggest improvements or fixes for the problematic code if possible.
+    - Use the extracted or provided values to call code_extractor_agent.
     - Output a concise analysis report for each log entry, including the code context and recommendations.
     
     ## OUTPUT
@@ -29,10 +27,11 @@ code_analyzer_agent = LlmAgent(
     - Avoid unnecessary details or lengthy explanations.
     - Only include the most important findings and recommendations.
     
-
+    ## LOG TO ANALYZE
+    {logs}
     """,
-    input_schema=LogFilterOutputSchema,
+
     description="Analyzes project code based on error logs and provides code-level insights and suggestions.",
-    #tools=[get_code_snippet_from_gitlab],
+    tools=[AgentTool(code_extractor_agent)],
     output_key="code_analysis_report"
 )

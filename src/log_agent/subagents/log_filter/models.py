@@ -1,4 +1,3 @@
-from typing import List
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -13,9 +12,8 @@ class LogAttribute(BaseModel):
     filename: str|None = Field(default=None, description="Filename where the log was generated")
     branch: str|None = Field(default=None, description="Branch name extracted from image tag")
     appname: str|None = Field(default=None, description="Application name associated with the log entry")
-    occurance: int = Field(default=0, description="Number of occurrences of this log entry")
+    occurrance: int = Field(default=0, description="Number of occurrences of this log entry")
 
-    @field_validator("stack_trace", mode="before")
     @classmethod
     def extract_stack_trace(cls, v):
         """
@@ -23,11 +21,10 @@ class LogAttribute(BaseModel):
         :return: The stack trace as a string or None if not available
         """
         # default as None if not provided
-        return ' '.join([line.strip() for line in v.splitlines() if "de.carsync." in line]) or None
+        return '\n'.join([line.strip() for line in v.splitlines() if "de.carsync." in line]) or None
 
-    @field_validator("branch", mode="before")
     @classmethod
-    def extract_branch(cls, tags: List[str]):
+    def extract_branch(cls, tags: list[str]):
         """
         Extracts the branch name from the tags in the log attributes.
         :param tags: List of tags from the log attributes
@@ -51,10 +48,10 @@ class LogAttribute(BaseModel):
             service=attributes.get("service", None),
             status=attributes.get("status", None),
             timestamp=attributes.get("timestamp", None),
-            stack_trace=attributes.get("stack_trace", None),
+            stack_trace=cls.extract_stack_trace(attributes.get("stack_trace", None)),
             exc_info=attributes.get("exc_info", None),
-            filename=attributes.get("filename", None),
-            branch=attributes.get("tags", None),
+            filename=attributes.get("filename", None) or attributes.get("logger_name", None),
+            branch=cls.extract_branch(attributes.get("tags", None)),
             appname=attributes.get("application-name", None),
         )
 
@@ -64,7 +61,3 @@ class LogFilterInputSchema(BaseModel):
     error_level: str = Field(..., description="Error level (e.g., error, warning, info)")
     time_period_hours: int = Field(..., description="Time period in hours")
     environment: str = Field(..., description="Environment (e.g., dev, staging, prod)")
-
-
-class LogFilterOutputSchema(BaseModel):
-    logs: List[LogAttribute] = Field(default=[], description="List of LogAttribute to process")

@@ -8,12 +8,9 @@ from .tools import get_filtered_logs
 from .models import LogFilterInputSchema
 
 
-GEMINI_MODEL = "gemini-2.0-flash"
-
-
 log_filter_agent = LlmAgent(
-    name="LogFilterAgent",
-    model=GEMINI_MODEL,
+    name="log_filter",
+    model="gemini-2.0-flash",
     instruction="""
     You are a Log Filter Agent.
     Your task is to help the user retrieve logs from Datadog.
