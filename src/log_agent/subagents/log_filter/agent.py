@@ -5,17 +5,10 @@ This agent receives project name, error level, and time period, then returns fil
 """
 from google.adk.agents.llm_agent import LlmAgent
 from .tools import get_filtered_logs
-from pydantic import BaseModel, Field
+from .models import LogFilterInputSchema
 
 
 GEMINI_MODEL = "gemini-2.0-flash"
-
-
-class LogFilterInputSchema(BaseModel):
-    project_name: str = Field(..., description="Project name (service)")
-    error_level: str = Field(..., description="Error level (e.g., error, warning, info)")
-    time_period_hours: int = Field(..., description="Time period in hours")
-    environment: str = Field(..., description="Environment (e.g., dev, staging, prod)")
 
 
 log_filter_agent = LlmAgent(
@@ -45,12 +38,10 @@ log_filter_agent = LlmAgent(
     ## ACTION
     - Use the extracted or provided values to call get_filtered_logs(project_name, error_level, time_period_hours, environment).
     - If there are more than 5 logs, return the logs with the top 5 most frequent unique messages (no duplicate messages).
-    - Return ONLY the filtered logs.
     - Do not add explanations or formatting.
     """,
     input_schema=LogFilterInputSchema,
-    description="Retrieves filtered logs from Datadog based on project, error level, time period, and environment. Returns up to 5 logs if too many are found.",
+    description="Retrieves logs from Datadog based on project, error level, time period, and environment. Returns up to 5 logs if too many are found.",
     tools=[get_filtered_logs],
-    output_key="filtered_logs",
+    output_key="logs",  # The key where the filtered logs will be stored in the output
 )
-

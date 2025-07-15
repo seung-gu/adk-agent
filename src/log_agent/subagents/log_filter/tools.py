@@ -1,8 +1,6 @@
 import pytz
-import json
 import collections
-from typing import Optional, List
-from pydantic import BaseModel, field_serializer
+from typing import List
 from datetime import timedelta, datetime
 from datadog_api_client import ApiClient, Configuration
 from datadog_api_client.v2.api.logs_api import LogsApi
@@ -12,6 +10,8 @@ from datadog_api_client.v2.model.logs_query_options import LogsQueryOptions
 from datadog_api_client.v2.model.logs_list_request_page import LogsListRequestPage
 from datadog_api_client.v2.model.logs_sort import LogsSort
 from datadog_api_client.v2.model.log import Log
+
+from .models import LogAttribute
 
 
 def fetch_all_logs(query, start_time, end_time):
@@ -61,6 +61,7 @@ def fetch_all_logs(query, start_time, end_time):
 def get_filtered_logs(project_name: str, error_level: str, time_period_hours: int, environment: str):
     """
     Retrieve logs from Datadog filtered by project_name, error_level, time_period_hours, and environment.
+    Returns a LogFilterOutputSchema instance with logs attribute for downstream agents.
     """
     tz = pytz.timezone("Europe/Paris")
     now = datetime.now(tz)
@@ -71,12 +72,10 @@ def get_filtered_logs(project_name: str, error_level: str, time_period_hours: in
     response = fetch_all_logs(query, start_time.isoformat(), now.isoformat())
     response_dict = get_top_unique_logs(response, top_n=5)
 
-    logs = response_dict if isinstance(response_dict, list) else [response_dict]
-
-    return {'logs': logs}
+    return {"logs": response_dict} # Return as a dict for consistency
 
 
-def get_top_unique_logs(logs: List[Log], top_n: int = 5) -> List[dict]:
+def get_top_unique_logs(logs: List[Log], top_n: int = 5) -> List[LogAttribute]:
     """
     Extract the top N unique logs.
     :param logs:
@@ -88,8 +87,8 @@ def get_top_unique_logs(logs: List[Log], top_n: int = 5) -> List[dict]:
     log_key_to_log = {}
 
     for log in logs:
-        attributes = log.to_dict().get("attributes", {})
-        p_log = LogAttributes.from_attributes(attributes)
+        attributes: dict = log.to_dict().get("attributes", {})
+        p_log: LogAttribute = LogAttribute.from_attributes(attributes)
 
         # if the log has stack_trace or exc_info, we consider it for counting
         if p_log.stack_trace or p_log.exc_info:
@@ -99,35 +98,9 @@ def get_top_unique_logs(logs: List[Log], top_n: int = 5) -> List[dict]:
 
     # after counting, only extract the most common top_n logs
     for key, p_log in log_key_to_log.items():
-        setattr(p_log, "occurances", log_counter[key])
+        setattr(p_log, "occurance", log_counter[key])
 
     top_keys = [k for k, _ in log_counter.most_common(top_n)]
     result = [log_key_to_log[k].dict() for k in top_keys]
 
     return result
-
-
-class LogAttributes(BaseModel):
-    document_id: Optional[str]
-    message: Optional[str]
-    service: Optional[str]
-    status: Optional[str]
-    timestamp: Optional[str]
-    stack_trace: Optional[str]
-    exc_info: Optional[str]
-    filename: Optional[str]
-    occurances: int = 0
-
-    @classmethod
-    def from_attributes(cls, attributes: dict):
-        attributes.update(attributes.pop("attributes", {}))
-        return cls(
-            document_id=attributes.get("document_id", None),
-            message=attributes.get("message", None),
-            service=attributes.get("service", None),
-            status=attributes.get("status", None),
-            timestamp=attributes.get("timestamp", None),
-            stack_trace=attributes.get("stack_trace", None),
-            exc_info=attributes.get("exc_info", None),
-            filename=attributes.get("filename", None)
-        )

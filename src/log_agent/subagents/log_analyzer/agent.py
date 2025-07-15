@@ -1,3 +1,4 @@
+from src.log_agent.subagents.log_filter.models import LogFilterOutputSchema
 from google.adk.agents.llm_agent import LlmAgent
 
 
@@ -8,10 +9,10 @@ log_analyzer_agent = LlmAgent(
     model=GEMINI_MODEL,
     instruction="""
     You are a Log Analyzer Agent.
-    Your task is to analyze the filtered_logs provided by the Log Filter Agent.
+    Your task is to analyze the logs provided by the Log Filter Agent.
     
     ## INPUT
-    - You will receive filtered_logs (list of log entries).
+    - You will receive logs (list of log entries).
     
     ## ACTION
     - Summarize the main error types and their frequencies.
@@ -27,9 +28,9 @@ log_analyzer_agent = LlmAgent(
     - Only include the most important findings and recommendations.
     - Ensure the summary is informative and actionable for developers.
     
-    ## LOGS TO REVIEW
-    {filtered_logs}
+
     """,
-    description="Analyzes filtered logs and provides a summary of errors and patterns.",
-    output_key="analysis_report",
+    input_schema=LogFilterOutputSchema,
+    description="Analyzes logs and provides a summary of errors and patterns.",
+    output_key="analysis_report"
 )

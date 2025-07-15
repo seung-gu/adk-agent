@@ -6,7 +6,7 @@ from urllib.parse import quote
 from dataclasses import dataclass
 
 
-def get_code_snippet_from_gitlab(repo_path: str, file_path: str, line_number: int, context_lines: int = 5, branch: str = "main"):
+def get_code_snippet_from_gitlab(logs):
     """
     Fetches a code snippet from a GitLab repository for a given file and line number.
     repo_path: full namespace path (e.g., eco/document-classifier)
@@ -18,31 +18,21 @@ def get_code_snippet_from_gitlab(repo_path: str, file_path: str, line_number: in
     """
     print(f"get_code_snippet_from_gitlab called with repo_path={repo_path}, file_path={file_path}, line_number={line_number}, context_lines={context_lines}, branch={branch}")
     private_token = os.environ.get("GITLAB_TOKEN")
-    if not repo_path or "/" not in repo_path:
-        raise ValueError("repo_path must be the full namespace/project path, e.g., eco/document-classifier.")
-    if not file_path or "/" not in file_path:
-        raise ValueError("file_path must be the full path from the project root, e.g., src/service/service.py. Just 'service.py' will not work if the file is in a subdirectory.")
+
     GITLAB_API_BASE = os.environ.get("GITLAB_API_BASE", "https://git.cardev.de/api/v4")
-    branch = "master"
-    # Accept repo_url as either a full URL or a project path
-    if repo_path.startswith("http://") or repo_path.startswith("https://"):
-        from urllib.parse import urlparse
-        parsed = urlparse(repo_path)
-        repo_path = parsed.path.lstrip("/")
+
     encoded_project = quote(repo_path, safe='')
     encoded_file = quote(file_path, safe='')
     api_url = f"{GITLAB_API_BASE}/projects/{encoded_project}/repository/files/{encoded_file}/raw?ref={branch}"
-    print(f"url : {api_url}")
+
     headers = {"PRIVATE-TOKEN": private_token} if private_token else {}
     response = requests.get(api_url, headers=headers)
+
     print("response : ", response)
     if response.status_code == 404:
-        # Try .py extension if not present
-        if not file_path.endswith('.py'):
-            encoded_file_alt = quote(file_path + '.py', safe='')
-            api_url_alt = f"{GITLAB_API_BASE}/projects/{encoded_project}/repository/files/{encoded_file_alt}/raw?ref={branch}"
-            print(f"Trying alternate url : {api_url_alt}")
-            response = requests.get(api_url_alt, headers=headers)
+        # Try if branch is 'master' instead of 'main'
+        api_url = f"{GITLAB_API_BASE}/projects/{encoded_project}/repository/files/{encoded_file}/raw?ref=master"
+        response = requests.get(api_url, headers=headers)
     if response.status_code == 403:
         raise Exception("Access denied (403). Check your GITLAB_TOKEN and project permissions.")
     if response.status_code == 404:
@@ -50,10 +40,7 @@ def get_code_snippet_from_gitlab(repo_path: str, file_path: str, line_number: in
     if response.status_code != 200:
         raise Exception(f"Failed to fetch file from GitLab: {response.status_code} {response.text}")
     code_lines = response.text.splitlines()
-    start = max(0, line_number - context_lines - 1)
-    end = min(len(code_lines), line_number + context_lines)
-    snippet = "\n".join(code_lines[start:end])
-    return snippet
+    return "\n".join(code_lines[line_number - context_lines:line_number + context_lines])
 
 
 def fqn_to_file_path(fqn: str, source_root: str = "core/src/main/java") -> str:
