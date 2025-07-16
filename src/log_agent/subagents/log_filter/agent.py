@@ -3,7 +3,7 @@ Log Filter Agent
 
 This agent receives project name, error level, and time period, then returns filtered logs from Datadog.
 """
-from google.adk.agents.llm_agent import LlmAgent
+from google.adk.agents import LlmAgent
 from .tools import get_filtered_logs
 from .models import LogFilterInputSchema
 

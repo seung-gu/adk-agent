@@ -14,14 +14,10 @@ def analyze_code_snippets(logs: list[dict]):
     return results
 
 
-def get_code_from_gitlab_api(api_url: str):
+def get_code_from_gitlab_api():
     private_token = os.environ.get("GITLAB_TOKEN")
     headers = {"PRIVATE-TOKEN": private_token}
-    response = requests.get(api_url, headers=headers)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return f"Failed to fetch: {response.status_code}"
+    return {"GITLAB_API_BASE": "https://git.cardev.de/api/v4", "private_token": private_token}
 
 
 def get_code_snippet_from_gitlab(log: LogAttribute):

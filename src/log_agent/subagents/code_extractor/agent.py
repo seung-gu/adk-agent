@@ -1,27 +1,60 @@
-from google.adk.agents.llm_agent import LlmAgent
+from google.adk.agents import LlmAgent, LoopAgent
 
-from .tools import analyze_code_snippets
+from .tools import get_code_from_gitlab_api
 
 
 code_extractor_agent = LlmAgent(
     name="code_extractor",
     model="gemini-2.0-flash",
     instruction="""
-    You are a Code Extractor Agent.
-    Your task is to extract code snippets from GitLab using the provided log information.
-    
-    ## INPUT
-    - You MUST always call the 'analyze_code_snippets' tool with the provided logs. 
-    - Do not attempt to answer or summarize directly. Wait for the tool result and only return its output.
+    You are a GitLab Code Extractor Agent.
 
-    ## OUTPUT
-    - Return the relevant code snippet for each log entry.
-    - Keep your answer concise and focused on the code context.
+    ## 목적
+    - 주어진 로그 리스트(logs)로부터 각 로그마다 연관된 소스코드를 GitLab API를 통해 자동으로 받아오세요.
     
-    ## LOG TO ANALYZE
-    {logs}
+    ## 절차
+    
+    - 각 로그는 dict 형태이며, logs는 리스트(list[dict])입니다.
+    - 각 로그에서 service(프로젝트), filename(파일경로), branch, stack_trace(스택트레이스)를 추출하세요.
+    - stack_trace에 파일/라인 정보가 추가로 있으면 전부 추출해서, 가능한 모든 파일을 가져오세요.
+    - ENCODED_PROJECT는 service를 URL 인코딩한 값입니다.
+    - ENCODED_FILE은 파일 경로 또는 스택트레이스에서 가져온 값을 URL 인코딩한 값입니다.
+    - BRANCH는 branch를 그대로 사용하세요.
+    - GITLAB_TOKEN은 env 파일에서 가져오세요.
+    - 아래 API 패턴에 맞게 요청 URL을 만드세요:
+      https://gitlab.com/api/v4/projects/ENCODED_PROJECT/repository/files/ENCODED_FILE/raw?ref=BRANCH
+    
+    ## 출력 예시
+    
+    아래 포맷을 그대로 유지하세요. 여러 파일이 있으면 아래처럼 파일별로 이어서 출력하세요.
+    stack_trace에 있는 라인 번호를 기준으로 적당한 길이의 코드를 가져오세요.
+    
+    <code>
+    [파일경로] (브랜치)
+    <코드 내용>
+    
+    [다른파일경로] (브랜치)
+    <코드 내용>
+    </code>
+    
+    예시:
+    <code>
+    [src/main/java/de/carsync/fleet/mysql/adapter/VehicleMileageDataStorageAdapter.java] (master)
+    public class VehicleMileageDataStorageAdapter {
+      // ...
+    }
+    
+    [src/main/java/de/carsync/fleet/core/adapter/VehicleAdapter.java] (master)
+    public class VehicleAdapter {
+      // ...
+    }
+    </code>
+    
+    - 설명이나 해석 없이, 코드만 결과로 출력하세요.
+    - 파일명, 브랜치와 함께 구분자 역할로 출력하세요.
     """,
 
     description="Extracts code snippets from GitLab based on log information.",
-    tools=[analyze_code_snippets],
+   # tools=[get_code_from_gitlab_api],
+    output_key="code_snippets",
 )

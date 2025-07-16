@@ -1,4 +1,4 @@
-from google.adk.agents.llm_agent import LlmAgent
+from google.adk.agents import LlmAgent
 
 
 log_analyzer_agent = LlmAgent(

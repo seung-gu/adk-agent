@@ -21,6 +21,8 @@ class LogAttribute(BaseModel):
         :return: The stack trace as a string or None if not available
         """
         # default as None if not provided
+        if not v:
+            return None
         return '\n'.join([line.strip() for line in v.splitlines() if "de.carsync." in line]) or None
 
     @classmethod
