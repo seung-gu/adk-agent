@@ -71,7 +71,7 @@ def get_filtered_logs(project_name: str, error_level: str, time_period_hours: in
     response = fetch_all_logs(query, start_time.isoformat(), now.isoformat())
     response_dict = get_top_unique_logs(response, top_n=5)
 
-    return {"logs": response_dict} # Return as a dict for consistency
+    return response_dict # Return as a dict for consistency
 
 
 def get_top_unique_logs(logs: list[Log], top_n: int = 5) -> list[LogAttribute]:

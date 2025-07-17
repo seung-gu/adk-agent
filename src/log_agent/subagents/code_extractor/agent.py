@@ -1,14 +1,13 @@
-from google.adk.agents import LlmAgent, LoopAgent
+from google.adk.agents import LlmAgent
 
-from .tools import get_code_from_gitlab_api
-
+from ..log_filter.models import LogAttribute
 
 code_extractor_agent = LlmAgent(
     name="code_extractor",
     model="gemini-2.0-flash",
     instruction="""
     You are a GitLab Code Extractor Agent.
-
+    
     ## 목적
     - 주어진 로그 리스트(logs)로부터 각 로그마다 연관된 소스코드를 GitLab API를 통해 자동으로 받아오세요.
     
@@ -24,12 +23,17 @@ code_extractor_agent = LlmAgent(
     - 아래 API 패턴에 맞게 요청 URL을 만드세요:
       https://gitlab.com/api/v4/projects/ENCODED_PROJECT/repository/files/ENCODED_FILE/raw?ref=BRANCH
     
+    - 만들어낸 코드 (tool_code)는 출력 할 필요 없습니다. API로부터 가져온 코드만 출력하세요.
+    - **stack_trace에서 문제가 발생한 파일과 라인 번호를 포함한 함수 내용만 출력하세요. 주석 또는 import, package는 제외하세요.**
+      example: (VehicleMileageAdapter.java:259)
+               VehicleMileageAdapter.java 파일 259번째 줄에서 문제가 발생했습니다. 이 줄을 포함한 코드의 함수 내용을 출력하세요.
+
     ## 출력 예시
     
     아래 포맷을 그대로 유지하세요. 여러 파일이 있으면 아래처럼 파일별로 이어서 출력하세요.
-    stack_trace에 있는 라인 번호를 기준으로 적당한 길이의 코드를 가져오세요.
     
     <code>
+    [message]
     [파일경로] (브랜치)
     <코드 내용>
     
@@ -38,7 +42,9 @@ code_extractor_agent = LlmAgent(
     </code>
     
     예시:
+    
     <code>
+    [message: "failed to create license plate assignments for this vehicle"]
     [src/main/java/de/carsync/fleet/mysql/adapter/VehicleMileageDataStorageAdapter.java] (master)
     public class VehicleMileageDataStorageAdapter {
       // ...
@@ -53,8 +59,7 @@ code_extractor_agent = LlmAgent(
     - 설명이나 해석 없이, 코드만 결과로 출력하세요.
     - 파일명, 브랜치와 함께 구분자 역할로 출력하세요.
     """,
-
+    input_schema=LogAttribute,
     description="Extracts code snippets from GitLab based on log information.",
-   # tools=[get_code_from_gitlab_api],
     output_key="code_snippets",
 )

@@ -1,5 +1,6 @@
 from google.adk.agents import LlmAgent
 
+from src.log_agent.subagents.log_filter.models import LogAttribute
 
 log_analyzer_agent = LlmAgent(
     name="log_analyzer",
@@ -25,10 +26,9 @@ log_analyzer_agent = LlmAgent(
     - Only include the most important findings and recommendations.
     - Ensure the summary is informative and actionable for developers.
     
-    ## LOG TO ANALYZE
-    {logs}
+ 
     """,
-
+    input_schema=LogAttribute,
     description="Analyzes logs and provides a summary of errors and patterns.",
     output_key="log_analysis_report"
 )

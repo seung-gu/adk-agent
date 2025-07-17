@@ -7,7 +7,6 @@ from google.adk.agents import LlmAgent
 from .tools import get_filtered_logs
 from .models import LogFilterInputSchema
 
-
 log_filter_agent = LlmAgent(
     name="log_filter",
     model="gemini-2.0-flash",
@@ -40,5 +39,5 @@ log_filter_agent = LlmAgent(
     input_schema=LogFilterInputSchema,
     description="Retrieves logs from Datadog based on project, error level, time period, and environment. Returns up to 5 logs if too many are found.",
     tools=[get_filtered_logs],
-    output_key="logs",  # The key where the filtered logs will be stored in the output
+
 )
