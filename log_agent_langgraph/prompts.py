@@ -52,7 +52,7 @@ summarize_prompt = PromptTemplate(
 
 code_retriever_prompt = ChatPromptTemplate.from_messages([
     ("system", """
-        You are a code retriever agent. Given a log JSON, do the following:
+        You are a URL retriever agent. Given a log JSON, do the following:
         1. Parse 'stack_trace' or 'exc_info' fields to extract full .py or .java file paths
             - For Python stack traces: the innermost calls are at the **bottom** (last 3 entries).
             - For Java stack traces: the innermost calls are at the **top** (first 3 entries).
@@ -61,7 +61,7 @@ code_retriever_prompt = ChatPromptTemplate.from_messages([
         3. in appname, 
             - Put eco/ as prefix (e.g. carsync-frontend → eco/carsync-frontend)
             - If appname already has eco-, replace - with / (e.g., eco-carsync-frontend → eco/carsync-frontend)
-        4. For repo path, use the 'fetch_code_from_gitlab' tool to fetch source code.
+        4. For repo path, use the 'fetch_code_from_gitlab' tool to fetch urls.
         Respond as list of URLs:
         {{ "code_urls" : [...] }} 
         DO NOT include ```json in string
@@ -85,7 +85,8 @@ log_analyze_prompt = ChatPromptTemplate.from_messages([
         ## OUTPUT
         - Respond with a concise, human-readable summary (not JSON).
         - Keep your answer brief and to the point, but provide enough detail for context.
-        - Respond how to modify the code to fix the issue showing before and after.
+        - Respond how to modify the code to fix the issue showing before and after by calling 'get_code_from_gitlab'.
+        - Do not fucking create before code on your fucking self.
         - Please also add the file path and line number for the code change.
         - Use title (Title: ) and bullet points or short paragraphs for clarity.
         - Avoid unnecessary details or lengthy explanations.

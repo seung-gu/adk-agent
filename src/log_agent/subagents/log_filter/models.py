@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class LogAttribute(BaseModel):
@@ -15,15 +15,23 @@ class LogAttribute(BaseModel):
     occurrance: int = Field(default=0, description="Number of occurrences of this log entry")
 
     @classmethod
-    def extract_stack_trace(cls, v):
+    def extract_stack_trace(cls, stack_trace: str|None, exc_info: str|None) -> str|None:
         """
         Extracts the stack trace from the log message if available.
         :return: The stack trace as a string or None if not available
         """
         # default as None if not provided
-        if not v:
+        try:
+            if not stack_trace:
+                return exc_info if exc_info else None
+
+            error_lines = [line.strip() for line_no, line in enumerate(stack_trace.splitlines())
+                           if ("de.carsync." in line and ".java:" in line) or line_no==0][:5]
+            return str(error_lines) if len(error_lines) > 1 else None
+        except Exception as e:
+            print(f"Error extracting stack trace: {e}")
             return None
-        return '\n'.join([line.strip() for line in v.splitlines() if "de.carsync." in line]) or None
+
 
     @classmethod
     def extract_branch(cls, tags: list[str]):
@@ -50,7 +58,7 @@ class LogAttribute(BaseModel):
             service=attributes.get("service", None),
             status=attributes.get("status", None),
             timestamp=attributes.get("timestamp", None),
-            stack_trace=cls.extract_stack_trace(attributes.get("stack_trace", None)),
+            stack_trace=cls.extract_stack_trace(attributes.get("stack_trace", None), attributes.get("exc_info", None)),
             exc_info=attributes.get("exc_info", None),
             filename=attributes.get("filename", None) or attributes.get("logger_name", None),
             branch=cls.extract_branch(attributes.get("tags", None)),

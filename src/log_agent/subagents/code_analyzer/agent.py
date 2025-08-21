@@ -1,5 +1,6 @@
 from google.adk.agents import LlmAgent
 
+from src.log_agent.subagents.code_analyzer.tools import load_code_snippets
 
 code_analyzer_agent = LlmAgent(
     name="code_analyzer",
@@ -18,17 +19,23 @@ code_analyzer_agent = LlmAgent(
 
     ## OUTPUT
     - Respond with a concise, human-readable summary (not JSON).
-    - Keep your answer brief and to the point, but provide enough detail for context (aim for 500-1000 characters).
     - Use bullet points or short paragraphs for clarity.
-    - Avoid unnecessary details or lengthy explanations.
+    - Respond how to modify the code to fix the issue showing before and after.
+    - Please also add the file path and line number for the code change.
     - Only include the most important findings and recommendations.
 
     ## LOG TO ANALYZE
     {log_analysis_report}
     
     ## CODE TO CHECK
-    {code_snippets}
+    call api using load_code_snippets tool that has only 200 HTTP status code and load the codes.
+    {code_urls}
+    
+    after return code_analyzer_report, clear all logs. It shouldn't be used in next time.
+    
+    ## Return language : English
     """,
 
+    tools=[load_code_snippets],
     output_key="code_analysis_report"
 )

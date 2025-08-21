@@ -69,9 +69,9 @@ async def main_async():
             break
 
         # Update interaction history with the user's query
-        add_user_query_to_history(
-            session_service, APP_NAME, USER_ID, SESSION_ID, user_input
-        )
+      #  add_user_query_to_history(
+      #      session_service, APP_NAME, USER_ID, SESSION_ID, user_input
+      #  )
 
         # Process the user query through the agent
         await call_agent_async(runner, USER_ID, SESSION_ID, user_input)

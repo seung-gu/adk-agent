@@ -7,6 +7,7 @@ from google.adk.agents import LlmAgent
 from .tools import get_filtered_logs
 from .models import LogFilterInputSchema
 
+
 log_filter_agent = LlmAgent(
     name="log_filter",
     model="gemini-2.0-flash",
@@ -35,9 +36,11 @@ log_filter_agent = LlmAgent(
     - Use the extracted or provided values to call get_filtered_logs(project_name, error_level, time_period_hours, environment).
     - If there are more than 5 logs, return the logs with the top 5 most frequent unique messages (no duplicate messages).
     - Do not add explanations or formatting.
+    
+    ## Output Format
+    Ask the user to specify the number of the error entry from the list to analyze further, and return the log that matches the user's request.
     """,
     input_schema=LogFilterInputSchema,
     description="Retrieves logs from Datadog based on project, error level, time period, and environment. Returns up to 5 logs if too many are found.",
-    tools=[get_filtered_logs],
-
+    tools=[get_filtered_logs]
 )
